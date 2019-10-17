@@ -3,50 +3,65 @@
 from configparser import ConfigParser
 import sys
 import logging
+import pyinotify
+import envhelper
+import MyLogger
 
 datafolder = "./config/"
 
-def setupLogger():
-    config = getConfig()
-    verbosity = config.get("LOG", "level")
-    logformat = '%(asctime)s %(levelname)-8s- %(message)s'
-    errors = None
-    try:
-        logformat = config.get("LOG", "format")
-    except Exception as e:
-        errors = 'ConfigError: '+e.message
-        pass
+class SingletonType(type):
+    _instances = {}
 
-    log_level = logging.INFO #Deault logging level
-    if "ERROR" == verbosity:
-        log_level = logging.ERROR
-    elif "WARN" == verbosity:
-        log_level = logging.WARN
-    elif "INFO" == verbosity:
-        log_level = logging.INFO
-    elif "DEBUG" == verbosity:
-        log_level = logging.DEBUG
+    def __call__(cls, *args, **kwargs):
+        if cls not in cls._instances:
+            cls._instances[cls] = super(SingletonType, cls).__call__(*args, **kwargs)
+        return cls._instances[cls]
 
-    logger = logging.getLogger(__name__)
-    logging.basicConfig(stream=sys.stdout, format=logformat, datefmt="%d.%m.%Y %H:%M:%S", level=log_level)
 
-    if errors is not None:
-        logging.error(errors)
+class Config(object, metaclass=SingletonType):
+    _config = None
+    _notifier = None
 
-    return logger
+    def __init__(self):
+        self._config = ConfigParser()
+        self._loadConfig()
 
+        # add Filewatch
+        wm = pyinotify.WatchManager()  # Watch Manager
+        wm.add_watch(datafolder, pyinotify.IN_CLOSE_WRITE)
+
+        self._notifier = pyinotify.ThreadedNotifier(wm, EventHandler())
+        self._notifier.daemon = True
+        self._notifier.start()
+
+    def __exit__(self, exc_type, exc_value, traceback):
+        self._notifier.stop()
+
+    def __del__(self):
+        self._notifier.stop()
+
+    def _loadConfig(self):
+        self._config.read(datafolder+"settings.ini")
+
+    def getConfig(self):
+        return self._config
+
+    def getConfigVal(self, section, key, type='string'):
+        try:
+            value = self._config.get(section, key)
+            return value
+        except Exception as e:
+            logger = MyLogger.getLogger()
+            logger.error('ConfigError: '+e.message)
+            return None
+
+class EventHandler(pyinotify.ProcessEvent):
+        def process_IN_CLOSE_WRITE(self, event):
+            if event.name == 'settings.ini':
+                Config.__call__()._readConfig()
 
 def getConfig():
-    config = ConfigParser()
-    config.read(datafolder+"settings.ini")
-    return config
+    return Config().getConfig()
 
 def getConfigVal(section, key, type='string'):
-    config = getConfig()
-
-    try:
-        value = config.get(section, key)
-        return value
-    except Exception as e:
-        logging.error('ConfigError: '+e.message)
-        return None
+    return Config().getConfigVal(section, key, type)
