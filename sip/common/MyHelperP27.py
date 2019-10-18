@@ -24,20 +24,31 @@ class Logger():
 
     def _setupLogger(self):
         config = Config().getConfig()
-        verbosity = None
         errors = ''
-        try:
-            verbosity = config.get("LOG", "level")
-        except Exception as e:
-            errors = e.message
-            pass
 
         logformat = '%(asctime)s %(levelname)-8s- %(message)s'
-
         try:
             logformat = config.get("LOG", "format")
         except Exception as e:
             errors = e.message +", " + errors
+            pass
+
+        log_level = self.getLoglevel()
+        logging.basicConfig(stream=sys.stdout, format=logformat, datefmt="%d.%m.%Y %H:%M:%S", level=log_level)
+
+        self._logger.setLevel(log_level)
+        for handler in self._logger.handlers:
+            handler.setLevel(log_level)
+
+        if len(errors) > 0:
+            self._logger.warning(settings+': '+errors)
+
+    def getLoglevel(self):
+        config = Config().getConfig()
+        verbosity = None
+        try:
+            verbosity = config.get("LOG", "level")
+        except Exception as e:
             pass
 
         log_level = logging.INFO #Deault logging level
@@ -49,15 +60,7 @@ class Logger():
             log_level = logging.INFO
         elif "DEBUG" == verbosity:
             log_level = logging.DEBUG
-
-        logging.basicConfig(stream=sys.stdout, format=logformat, datefmt="%d.%m.%Y %H:%M:%S", level=log_level)
-
-        self._logger.setLevel(log_level)
-        for handler in self._logger.handlers:
-            handler.setLevel(log_level)
-
-        if len(errors) > 0:
-            self._logger.warning(settings+': '+errors)
+        return log_level
 
     def getLogger(self):
         return self._logger
