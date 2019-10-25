@@ -8,3 +8,8 @@ class ConfigForm(FlaskForm):
     telsearchkey = StringField('telsearch', validators=[DataRequired()])
     submit = SubmitField('Save')
    # age = InterField('age', validators=[DataRequired()])
+
+class EditentryForm(FlaskForm):
+    name = StringField('name', validators=[DataRequired()])
+    description = StringField('description', validators=[DataRequired()])
+    submit = SubmitField('Save')
