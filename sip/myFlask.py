@@ -9,7 +9,8 @@ from flask_bootstrap import Bootstrap
 
 
 app = Flask(__name__)
-#bootstrap = Bootstrap(app)
+bootstrap = Bootstrap(app)
+
 app.iniconfig = FlaskIni()
 with app.app_context():
     app.iniconfig.read('./config/settings.ini')
@@ -100,3 +101,12 @@ class Item(object):
 
 if __name__ == '__main__':
     app.run(debug=True)
+
+
+
+# pip3 isntall
+#
+#
+#
+#
+#

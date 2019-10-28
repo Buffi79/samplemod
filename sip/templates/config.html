@@ -1,19 +1,21 @@
-{% extends "base.html" %}
+{% extends 'base.html' %}
+{% from 'bootstrap/form.html' import render_form, render_field, render_form_row %}
+
 
 {% block content %}
-    <h1>SIP Config In</h1>
-    <form action="" method="post" novalidate>
-        {{ form.hidden_tag() }}
-        <p>
-            {{ form.level.label }} {{ form.level(size=32) }}
-        </p>
-        <p>
-            {{ form.format.label }} {{ form.format(size=32) }}
-        </p>
-                <p>
-            {{ form.telsearchkey.label }} {{ form.telsearchkey(size=32) }}
-        </p>
+<h1>render_form</h1>
 
-        <p>{{ form.submit() }}</p>
+
+    <h1>SIP</h1>
+    <form method="post">
+    {{ form.hidden_tag() }}
+    {{ render_form_row([form.level, form.format]) }}
+    {{ render_form_row([form.level, form.format], col_map={'level': 'col-md-6', 'format': 'col-md-4'}) }}
+    {{ render_form_row([form.level, form.format], col_map={'level': 'col-md-2', 'format': 'col-md-8'}) }}
+    {{ render_form_row([form.level, form.format], col_class_default='col-md-2') }}
+    {{ render_form_row([form.telsearchkey]) }}
+    {{ render_form_row([form.submit]) }}
     </form>
+
+
 {% endblock %}
