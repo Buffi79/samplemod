@@ -3,14 +3,17 @@ from flask_ini import FlaskIni
 from app.forms import ConfigForm
 from app.forms import EditentryForm
 from app.table import ItemTable
-from app import routes
+from app.table import Item
 from flask_bootstrap import Bootstrap
+from app.table import getItems
+from app.table import updateItem
 
+from app.table2 import columns as table2col
+from app.table2 import data as table2data
 
 
 app = Flask(__name__)
 bootstrap = Bootstrap(app)
-
 app.iniconfig = FlaskIni()
 with app.app_context():
     app.iniconfig.read('./config/settings.ini')
@@ -38,25 +41,38 @@ def sipconfig():
 
     return render_template('config.html', title='Sign In', form=form)
 
-@app.route('/table')
-def showtable():
-    items = Item.get_elements()
-    table = ItemTable(items)
+@app.route('/table1')
+def showtable1():
+    #items = Item.get_elements()
+    table = ItemTable(getItems())
 
     # You would usually want to pass this out to a template with
     # render_template.
     #return table.__html__()
-    return render_template('table.html', title='List', table=table)
+    return render_template('table.html', title='Whitelist', table=table)
+
+@app.route('/table2')
+def showtable2():
+    return render_template("table2.html",
+      data=table2data,
+      columns=table2col,
+      title='Flask Bootstrap Table')
+
 
 @app.route('/item/<int:id>', methods=['GET', 'POST'])
 def edit(id):
+    id = id-1
     form = EditentryForm()
-    item = Item.get_element_by_id(id)
+    #item = Item.get_element_by_id(id)
+    item = getItems()[id]
     if request.method == 'GET':
-        form.name.data = item.name
-        form.description.data = item.description
+        form.name.data = item.get('name')
+        form.description.data = item.get('description')
     elif form.validate_on_submit():
-        print (form.name.data)
+        #print (form.name.data)
+        updateItem(id, form.name.data, form.description.data)
+        table = ItemTable(getItems())
+        return render_template('table.html', title='Whitelist', table=table)
 
     return render_template('editentry.html', title='Edit', form=form)
  #   flash('Album updated successfully!')
@@ -76,33 +92,8 @@ def edit(id):
 #    else:
 #        return 'Error loading #{id}'.format(id=id)
 
-class Item(object):
-    """ a little fake database """
-    def __init__(self, id, name, description):
-        self.id = id
-        self.name = name
-        self.description = description
-
-    @classmethod
-    def get_elements(cls):
-        return [
-            Item(1, 'Z', 'zzzzz'),
-            Item(2, 'K', 'aaaaa'),
-            Item(3, 'B', 'bbbbb')]
-
-    @classmethod
-    def get_element_by_id(cls, id):
-        return [i for i in cls.get_elements() if i.id == id][0]
-
-
-
-
-
-
 if __name__ == '__main__':
     app.run(debug=True)
-
-
 
 # pip3 isntall
 #

@@ -1,0 +1,25 @@
+{% extends "base.html" %}
+
+{% block content %}
+
+    <h1>{{ title }}</h1>
+        <table class="table">
+            <thead>
+                <tr>
+                  {% for column in columns %}
+                    <th>{{ column.title }}</th>
+                  {% endfor %}
+                <tr>
+            </thead>
+            <tbody>
+                {% for entry in data %}
+                <tr>
+                    <td>{{ entry.name }}</td>
+                    <td>{{ entry.commits }}</td>
+                    <td>{{ entry.attention }}</td>
+                    <td>{{ entry.url }}</td>
+                 <tr>
+                {% endfor %}
+            </tbody>
+        </table>
+{% endblock %}
